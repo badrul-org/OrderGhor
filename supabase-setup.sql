@@ -64,7 +64,16 @@ CREATE TRIGGER set_updated_at
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activation_requests ENABLE ROW LEVEL SECURITY;
 
--- 6. RLS Policies for profiles
+-- 6. Helper function to check admin (SECURITY DEFINER bypasses RLS to avoid recursion)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND is_admin = true
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- 7. RLS Policies for profiles
 -- Users can read their own profile
 CREATE POLICY "Users read own profile"
   ON public.profiles FOR SELECT
@@ -79,22 +88,14 @@ CREATE POLICY "Users update own profile"
 -- Admins can read all profiles
 CREATE POLICY "Admins read all profiles"
   ON public.profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true
-    )
-  );
+  USING (public.is_admin());
 
 -- Admins can update all profiles
 CREATE POLICY "Admins update all profiles"
   ON public.profiles FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true
-    )
-  );
+  USING (public.is_admin());
 
--- 7. RLS Policies for activation_requests
+-- 8. RLS Policies for activation_requests
 -- Users can insert their own requests
 CREATE POLICY "Users insert own requests"
   ON public.activation_requests FOR INSERT
@@ -108,20 +109,12 @@ CREATE POLICY "Users read own requests"
 -- Admins can read all requests
 CREATE POLICY "Admins read all requests"
   ON public.activation_requests FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true
-    )
-  );
+  USING (public.is_admin());
 
 -- Admins can update all requests
 CREATE POLICY "Admins update all requests"
   ON public.activation_requests FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true
-    )
-  );
+  USING (public.is_admin());
 
 -- ============================================
 -- After running this SQL:
