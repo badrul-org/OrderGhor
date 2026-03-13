@@ -48,12 +48,45 @@ export function getDeliveryUpdateMessage(
   return `অর্ডারঘর থেকে:\n\nপ্রিয় ${customerName},\nআপনার অর্ডার #${orderNumber} শিপ করা হয়েছে!\n\nডেলিভারি: ${deliveryProvider}\nট্র্যাকিং: ${trackingNumber}\n\nশীঘ্রই পৌঁছে যাবে!`;
 }
 
-export function validateActivationCode(code: string): 'starter' | 'pro' | 'business' | null {
-  const pattern = /^OG-(S|P|B)-[A-Z0-9]{5}$/;
-  if (!pattern.test(code)) return null;
-  const type = code.split('-')[1];
-  if (type === 'S') return 'starter';
-  if (type === 'P') return 'pro';
-  if (type === 'B') return 'business';
-  return null;
+export interface ActivationResult {
+  valid: boolean;
+  licenseType?: 'starter' | 'pro' | 'business';
+  error?: string;
+  offline?: boolean;
+}
+
+function isValidCodeFormat(code: string): boolean {
+  return /^OG-(S|P|B)-[A-HJ-NP-Z2-9]{8}$/.test(code);
+}
+
+export async function validateActivationCode(code: string): Promise<ActivationResult> {
+  const trimmed = code.trim().toUpperCase();
+
+  if (!isValidCodeFormat(trimmed)) {
+    return { valid: false, error: 'Invalid code format' };
+  }
+
+  try {
+    const response = await fetch('/api/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: trimmed }),
+    });
+
+    if (!response.ok) {
+      return { valid: false, error: 'Server error. Please try again.', offline: true };
+    }
+
+    const data = await response.json();
+    if (data.valid && data.licenseType) {
+      return { valid: true, licenseType: data.licenseType };
+    }
+    return { valid: false, error: data.error || 'Invalid code' };
+  } catch {
+    return {
+      valid: false,
+      error: 'ইন্টারনেট সংযোগ নেই। অনুগ্রহ করে ইন্টারনেট চালু করে আবার চেষ্টা করুন।',
+      offline: true,
+    };
+  }
 }

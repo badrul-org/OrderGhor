@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Download, Upload, Trash2, Shield, Globe, Store } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, Upload, Trash2, Shield, Globe, Store, Loader2, LogOut, User, Send } from 'lucide-react';
 import Header from '../components/layout/Header';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { showToast } from '../components/shared/Toast';
 import { useTranslation } from '../i18n';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { db } from '../db/database';
 
 const inputClass = "w-full h-10 px-3.5 bg-white border border-gray-200/80 rounded-lg text-sm focus:outline-none transition-all";
 
 export default function Settings() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { settings, loadSettings, updateSettings, setLanguage, activateCode } = useSettingsStore();
+  const { user, signOut } = useAuthStore();
   const [businessName, setBusinessName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('');
@@ -19,6 +23,7 @@ export default function Settings() {
   const [defaultDeliveryCharge, setDefaultDeliveryCharge] = useState(60);
   const [activationInput, setActivationInput] = useState('');
   const [activationError, setActivationError] = useState('');
+  const [isActivating, setIsActivating] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   useEffect(() => { loadSettings(); }, [loadSettings]);
@@ -40,12 +45,19 @@ export default function Settings() {
 
   const handleActivate = async () => {
     setActivationError('');
-    const success = await activateCode(activationInput.trim().toUpperCase());
-    if (success) {
-      showToast('success', t.settings.activated);
-      setActivationInput('');
-    } else {
+    setIsActivating(true);
+    try {
+      const result = await activateCode(activationInput.trim().toUpperCase());
+      if (result.success) {
+        showToast('success', t.settings.activated);
+        setActivationInput('');
+      } else {
+        setActivationError(result.error || t.settings.invalidCode);
+      }
+    } catch {
       setActivationError(t.settings.invalidCode);
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -148,6 +160,20 @@ export default function Settings() {
           </div>
         </section>
 
+        {/* Account Info */}
+        <section className="bg-white rounded-xl p-6 shadow-xs border border-gray-100/60 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-1 bg-indigo-50 rounded-lg">
+              <User size={15} className="text-indigo-600" />
+            </div>
+            <h3 className="text-[13px] font-bold text-gray-800">{t.auth.account}</h3>
+          </div>
+          <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-white rounded-xl p-3.5 border border-gray-100">
+            <span className="text-xs text-gray-500 font-medium">{t.auth.email}</span>
+            <span className="text-xs font-semibold text-gray-700">{user?.email || '—'}</span>
+          </div>
+        </section>
+
         {/* Activation */}
         <section className="bg-white rounded-xl p-6 shadow-xs border border-gray-100/60 space-y-3">
           <div className="flex items-center gap-2 mb-1">
@@ -168,6 +194,12 @@ export default function Settings() {
               </p>
             </div>
           )}
+          <button
+            onClick={() => navigate('/request-activation')}
+            className="w-full h-10 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-semibold active:bg-emerald-100 border border-emerald-200/60 transition-colors"
+          >
+            <Send size={16} /> {t.requestActivation.title}
+          </button>
           <div className="flex gap-2">
             <input
               type="text"
@@ -176,8 +208,9 @@ export default function Settings() {
               placeholder={t.settings.enterCode}
               className="flex-1 h-10 px-3.5 bg-white border border-gray-200/80 rounded-lg text-sm font-mono uppercase focus:outline-none transition-all"
             />
-            <button onClick={handleActivate} className="px-4 h-10 bg-primary text-white rounded-lg text-sm font-bold active:opacity-90 transition-opacity shadow-sm">
-              {t.settings.activate}
+            <button onClick={handleActivate} disabled={!activationInput.trim() || isActivating} className="px-4 h-10 bg-primary text-white rounded-lg text-sm font-bold active:opacity-90 transition-opacity shadow-sm disabled:opacity-50 flex items-center gap-1.5">
+              {isActivating ? <Loader2 size={14} className="animate-spin" /> : null}
+              {isActivating ? 'যাচাই...' : t.settings.activate}
             </button>
           </div>
           {activationError && (
@@ -206,6 +239,17 @@ export default function Settings() {
             <Trash2 size={16} /> {t.settings.clearData}
           </button>
         </section>
+
+        {/* Logout */}
+        <button
+          onClick={async () => {
+            await signOut();
+            navigate('/login');
+          }}
+          className="w-full h-10 flex items-center justify-center gap-2 bg-red-50 text-red-600 rounded-xl text-sm font-semibold active:bg-red-100 border border-red-200/60 transition-colors"
+        >
+          <LogOut size={16} /> {t.auth.logout}
+        </button>
 
         {/* About */}
         <div className="text-center py-4">

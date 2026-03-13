@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingBag, PlusCircle, Users, Package, BarChart3,
-  Wallet, Settings,
+  Wallet, Settings, ShieldCheck, ClipboardList, UserCog,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const sidebarItems = [
   { path: '/', icon: LayoutDashboard, labelKey: 'dashboard' as const },
@@ -16,10 +17,17 @@ const sidebarItems = [
   { path: '/settings', icon: Settings, labelKey: 'settings' as const },
 ];
 
+const adminItems = [
+  { path: '/admin', icon: ShieldCheck, label: 'অ্যাডমিন' },
+  { path: '/admin/requests', icon: ClipboardList, label: 'রিকোয়েস্ট' },
+  { path: '/admin/users', icon: UserCog, label: 'ইউজার' },
+];
+
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { isAdmin } = useAuthStore();
 
   return (
     <aside className="hidden lg:flex flex-col w-[220px] bg-slate-50 border-r border-slate-200/80 h-screen sticky top-0">
@@ -71,6 +79,34 @@ export default function Sidebar() {
             );
           })}
         </div>
+
+        {/* Admin Section */}
+        {isAdmin && (
+          <div className="mt-4 pt-3 border-t border-slate-200/70">
+            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider px-3.5 mb-1.5">অ্যাডমিন</p>
+            <div className="space-y-0.5">
+              {adminItems.map((item) => {
+                const isActive = item.path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(item.path);
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className={`flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 group ${
+                      isActive
+                        ? 'bg-red-50/90 text-red-700 font-semibold shadow-xs'
+                        : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'
+                    }`}
+                  >
+                    <Icon size={20} className={isActive ? 'text-red-600' : 'text-slate-400 group-hover:text-slate-600'} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {isActive && <div className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Footer */}

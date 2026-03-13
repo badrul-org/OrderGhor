@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Star, Crown, Zap, ArrowLeft } from 'lucide-react';
+import { Check, Star, Crown, Zap, ArrowLeft, Loader2, WifiOff } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { showToast } from '../components/shared/Toast';
@@ -30,15 +30,26 @@ export default function Activation() {
   const { settings, activateCode } = useSettingsStore();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   const handleActivate = async () => {
     setError('');
-    const success = await activateCode(code.trim().toUpperCase());
-    if (success) {
-      showToast('success', t.settings.activated);
-      navigate('/');
-    } else {
+    setIsOffline(false);
+    setIsLoading(true);
+    try {
+      const result = await activateCode(code.trim().toUpperCase());
+      if (result.success) {
+        showToast('success', t.settings.activated);
+        navigate('/');
+      } else {
+        setError(result.error || t.settings.invalidCode);
+        setIsOffline(!!result.offline);
+      }
+    } catch {
       setError(t.settings.invalidCode);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,13 +134,25 @@ export default function Activation() {
             placeholder={t.settings.enterCode}
             className="w-full h-12 px-4 bg-white text-gray-900 rounded-xl text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
-          {error && <p className="text-xs text-amber-300 text-center">{error}</p>}
+          {error && (
+            <div className="flex items-center justify-center gap-2 text-xs text-amber-300">
+              {isOffline && <WifiOff size={14} />}
+              <span>{error}</span>
+            </div>
+          )}
           <button
             onClick={handleActivate}
-            disabled={!code.trim()}
-            className="w-full h-12 bg-amber-400 text-amber-900 rounded-xl text-sm font-bold active:bg-amber-500 disabled:opacity-50"
+            disabled={!code.trim() || isLoading}
+            className="w-full h-12 bg-amber-400 text-amber-900 rounded-xl text-sm font-bold active:bg-amber-500 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {t.settings.activate}
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                যাচাই হচ্ছে...
+              </>
+            ) : (
+              t.settings.activate
+            )}
           </button>
         </div>
       </div>

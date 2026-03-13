@@ -1,0 +1,8 @@
+{
+  "framework": "vite",
+  "functions": {
+    "api/activate.ts": {
+      "maxDuration": 10
+    }
+  }
+}
