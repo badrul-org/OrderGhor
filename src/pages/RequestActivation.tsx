@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Send, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import Header from '../components/layout/Header';
 import { showToast } from '../components/shared/Toast';
@@ -21,10 +22,14 @@ const paymentMethods = [
 export default function RequestActivation() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const [plan, setPlan] = useState<'starter' | 'pro' | 'business'>('pro');
+  const [searchParams] = useSearchParams();
+  const urlPlan = searchParams.get('plan');
+  const defaultPlan = (urlPlan === 'starter' || urlPlan === 'pro' || urlPlan === 'business') ? urlPlan : 'pro';
+  const [plan, setPlan] = useState<'starter' | 'pro' | 'business'>(defaultPlan);
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'nagad' | 'rocket'>('bkash');
   const [transactionId, setTransactionId] = useState('');
-  const [amount, setAmount] = useState('');
+  const planPrices: Record<string, string> = { starter: '299', pro: '499', business: '799' };
+  const [amount, setAmount] = useState(planPrices[defaultPlan] || '');
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<ActivationRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
@@ -106,7 +111,7 @@ export default function RequestActivation() {
               {planOptions.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => setPlan(p.id)}
+                  onClick={() => { setPlan(p.id); setAmount(planPrices[p.id] || ''); }}
                   className={`p-3 rounded-xl border-2 text-center transition-all ${
                     plan === p.id
                       ? 'border-primary bg-primary/5'

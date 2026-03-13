@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Star, Crown, Zap, ArrowLeft, Loader2, WifiOff } from 'lucide-react';
+import { Check, Star, Crown, Zap, ArrowLeft, Loader2, WifiOff, Send } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { showToast } from '../components/shared/Toast';
 
 const plans = [
@@ -28,6 +29,7 @@ export default function Activation() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { settings, activateCode } = useSettingsStore();
+  const { user } = useAuthStore();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -109,6 +111,31 @@ export default function Activation() {
                     </div>
                   ))}
                 </div>
+                {/* Buy / Request Button */}
+                {user ? (
+                  <button
+                    onClick={() => navigate(`/request-activation?plan=${plan.id}`)}
+                    className={`w-full mt-3 h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform ${
+                      plan.recommended
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Send size={14} />
+                    রিকোয়েস্ট পাঠান
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login')}
+                    className={`w-full mt-3 h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform ${
+                      plan.recommended
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    লগইন করে কিনুন
+                  </button>
+                )}
               </div>
             );
           })}
