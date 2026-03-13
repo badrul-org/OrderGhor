@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+@theme {
+  /* Modern Brand Palette - Vibrant indigo/violet */
+  --color-primary: #6366F1;
+  --color-primary-light: #818CF8;
+  --color-primary-dark: #4F46E5;
+  --color-primary-50: #EEF2FF;
+  --color-primary-100: #E0E7FF;
+  --color-primary-200: #C7D2FE;
+
+  /* Accent - Warm coral for CTAs */
+  --color-accent: #F97316;
+  --color-accent-light: #FB923C;
+
+  /* Surface Colors */
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F8FAFC;
+  --color-surface-elevated: #FFFFFF;
+
+  /* Status Colors - Modern and vibrant */
+  --color-status-new: #6366F1;
+  --color-status-confirmed: #8B5CF6;
+  --color-status-processing: #F59E0B;
+  --color-status-shipped: #06B6D4;
+  --color-status-delivered: #10B981;
+  --color-status-returned: #EF4444;
+  --color-status-cancelled: #6B7280;
+
+  /* Payment Colors */
+  --color-paid: #10B981;
+  --color-unpaid: #EF4444;
+  --color-partial: #F59E0B;
+  --color-cod: #8B5CF6;
+
+  /* Modern Shadow System */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+  --shadow-glow: 0 0 20px rgba(99,102,241,0.15);
+  --shadow-nav: 0 -2px 20px rgba(0,0,0,0.04);
+  --shadow-fab: 0 8px 24px rgba(99,102,241,0.35);
+}
+
+@layer base {
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans Bengali', 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #F8FAFC;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.06) 0, transparent 45%),
+    radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.05) 0, transparent 45%);
+  color: #0F172A;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+/* === Scrollbar === */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 100px; }
+  ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+}
+
+/* === Typography === */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* === Safe Area === */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* === Animations === */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-slideUp { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-slideDown { animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-slideIn { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-fadeIn { animation: fadeIn 0.25s ease-out; }
+.animate-scaleIn { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* === Interactive States === */
+@media (min-width: 1024px) {
+  .card-hover {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-hover:hover {
+    box-shadow: 0 8px 25px -5px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-press {
+  transition: transform 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+/* === Glass Effect === */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* === Modern Input Focus === */
+input:focus, select:focus, textarea:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+  outline: none;
+}
+
+/* === Gradient Utilities === */
+.gradient-primary {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+}
+.gradient-warm {
+  background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
+}
+.gradient-success {
+  background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+}
+.gradient-mesh {
+  background:
+    radial-gradient(at 20% 20%, rgba(99,102,241,0.08) 0, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(139,92,246,0.06) 0, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(249,115,22,0.04) 0, transparent 50%);
+}
+
+/* === Dot Pattern === */
+.pattern-dots {
+  background-image: radial-gradient(circle, rgba(99,102,241,0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* === Reusable Surfaces === */
+.surface-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.75);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.surface-card-soft {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(226, 232, 240, 0.65);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.section-label {
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.focus-ring {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.focus-ring:focus-within {
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
