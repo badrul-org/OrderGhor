@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/database';
+import { syncService } from '../sync/SyncService';
 import type { Customer, ReliabilityScore } from '../types';
 
 interface CustomerState {
@@ -35,6 +36,7 @@ export const useCustomerStore = create<CustomerState>((set) => ({
     const id = (await db.customers.add(customer)) as number;
     const newCustomer = { ...customer, id };
     set((state) => ({ customers: [newCustomer, ...state.customers] }));
+    syncService.enqueue('customers', 'create', id);
     return id;
   },
 
@@ -43,11 +45,13 @@ export const useCustomerStore = create<CustomerState>((set) => ({
     set((state) => ({
       customers: state.customers.map((c) => (c.id === id ? { ...c, ...updates, updatedAt: new Date() } : c)),
     }));
+    syncService.enqueue('customers', 'update', id);
   },
 
   deleteCustomer: async (id) => {
     await db.customers.delete(id);
     set((state) => ({ customers: state.customers.filter((c) => c.id !== id) }));
+    syncService.enqueue('customers', 'delete', id);
   },
 
   findByPhone: async (phone) => {
@@ -66,6 +70,7 @@ export const useCustomerStore = create<CustomerState>((set) => ({
         area: area || existing.area,
         updatedAt: new Date(),
       });
+      syncService.enqueue('customers', 'update', existing.id);
       return existing.id;
     }
 
@@ -90,6 +95,7 @@ export const useCustomerStore = create<CustomerState>((set) => ({
     };
     const id = (await db.customers.add(newCustomer)) as number;
     set((state) => ({ customers: [{ ...newCustomer, id }, ...state.customers] }));
+    syncService.enqueue('customers', 'create', id);
     return id;
   },
 }));

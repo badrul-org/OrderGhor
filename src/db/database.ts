@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { Order, Customer, Product, DailyLedger, Expense, AppSettings } from '../types';
+import type { SyncQueueItem, SyncIdMap } from '../types/sync';
 
 export class OrderGhorDB extends Dexie {
   orders!: Table<Order>;
@@ -8,9 +9,12 @@ export class OrderGhorDB extends Dexie {
   dailyLedger!: Table<DailyLedger>;
   expenses!: Table<Expense>;
   settings!: Table<AppSettings>;
+  syncQueue!: Table<SyncQueueItem>;
+  syncIdMap!: Table<SyncIdMap>;
 
   constructor() {
     super('OrderGhorDB');
+
     this.version(1).stores({
       orders: '++id, orderNumber, customerId, orderStatus, paymentStatus, createdAt, [orderStatus+createdAt]',
       customers: '++id, phone, name, reliabilityScore, createdAt',
@@ -18,6 +22,17 @@ export class OrderGhorDB extends Dexie {
       dailyLedger: '++id, &date',
       expenses: '++id, date, category',
       settings: '++id',
+    });
+
+    this.version(2).stores({
+      orders: '++id, orderNumber, customerId, orderStatus, paymentStatus, createdAt, [orderStatus+createdAt], cloudId',
+      customers: '++id, phone, name, reliabilityScore, createdAt, cloudId',
+      products: '++id, name, category, sku, isActive, cloudId',
+      dailyLedger: '++id, &date',
+      expenses: '++id, date, category, cloudId',
+      settings: '++id',
+      syncQueue: '++id, table, operation, localId, status, createdAt',
+      syncIdMap: '++id, [table+localId], [table+cloudId]',
     });
   }
 }

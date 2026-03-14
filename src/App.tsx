@@ -23,18 +23,36 @@ import AdminRequests from './pages/admin/AdminRequests';
 import AdminUsers from './pages/admin/AdminUsers';
 import { useSettingsStore } from './store/useSettingsStore';
 import { useAuthStore } from './store/useAuthStore';
+import { useSyncStore } from './store/useSyncStore';
+import { syncService } from './sync/SyncService';
 import { seedDemoData } from './db/seed';
 
 export default function App() {
   const loadSettings = useSettingsStore((s) => s.loadSettings);
   const syncLicense = useSettingsStore((s) => s.syncLicenseFromProfile);
   const initializeAuth = useAuthStore((s) => s.initialize);
+  const setSyncStatus = useSyncStore((s) => s.setStatus);
+  const setSyncPending = useSyncStore((s) => s.setPendingCount);
 
   useEffect(() => {
-    initializeAuth();
-    loadSettings().then(() => syncLicense());
-    seedDemoData();
-  }, [initializeAuth, loadSettings, syncLicense]);
+    // Wire up sync service callbacks to UI store
+    syncService.onStatusChange = setSyncStatus;
+    syncService.onPendingChange = setSyncPending;
+
+    const init = async () => {
+      await initializeAuth();
+      await loadSettings();
+      await syncLicense();
+      await seedDemoData();
+
+      // Initialize sync for logged-in user
+      const user = useAuthStore.getState().user;
+      if (user) {
+        await syncService.initialize(user.id);
+      }
+    };
+    init();
+  }, [initializeAuth, loadSettings, syncLicense, setSyncStatus, setSyncPending]);
 
   return (
     <BrowserRouter>

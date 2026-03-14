@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
 import { supabase, type Profile } from '../lib/supabase';
+import { syncService } from '../sync/SyncService';
 
 interface AuthState {
   user: User | null;
@@ -99,12 +100,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (data.user) {
       set({ user: data.user });
       await get().loadProfile(data.user.id);
+
+      // Initialize sync and pull data from cloud
+      await syncService.initialize(data.user.id);
+      await syncService.pullFromCloud();
     }
 
     return { error: null };
   },
 
   signOut: async () => {
+    syncService.stop();
     await supabase.auth.signOut();
     set({ user: null, profile: null, isAdmin: false });
   },

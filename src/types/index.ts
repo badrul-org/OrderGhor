@@ -27,6 +27,7 @@ export interface OrderItem {
 
 export interface Order {
   id?: number;
+  cloudId?: string;
   orderNumber: string;
   customerId: number;
   customerName: string;
@@ -52,6 +53,7 @@ export interface Order {
 
 export interface Customer {
   id?: number;
+  cloudId?: string;
   name: string;
   phone: string;
   altPhone: string;
@@ -78,6 +80,7 @@ export interface ProductVariant {
 
 export interface Product {
   id?: number;
+  cloudId?: string;
   name: string;
   sku: string;
   category: string;
@@ -108,6 +111,7 @@ export interface DailyLedger {
 
 export interface Expense {
   id?: number;
+  cloudId?: string;
   date: Date;
   category: ExpenseCategory;
   description: string;

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/database';
+import { syncService } from '../sync/SyncService';
 import type { Product } from '../types';
 
 interface ProductState {
@@ -27,6 +28,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
     const id = (await db.products.add(product)) as number;
     const newProduct = { ...product, id };
     set((state) => ({ products: [newProduct, ...state.products] }));
+    syncService.enqueue('products', 'create', id);
     return id;
   },
 
@@ -35,11 +37,13 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set((state) => ({
       products: state.products.map((p) => (p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p)),
     }));
+    syncService.enqueue('products', 'update', id);
   },
 
   deleteProduct: async (id) => {
     await db.products.update(id, { isActive: false });
     set((state) => ({ products: state.products.filter((p) => p.id !== id) }));
+    syncService.enqueue('products', 'delete', id);
   },
 
   updateStock: async (id, change) => {
@@ -50,6 +54,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set((state) => ({
       products: state.products.map((p) => (p.id === id ? { ...p, stock: newStock } : p)),
     }));
+    syncService.enqueue('products', 'update', id);
   },
 
   getLowStockProducts: () => {

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Upload, Trash2, Shield, Globe, Store, Loader2, LogOut, User, Send } from 'lucide-react';
+import { Download, Upload, Trash2, Shield, Globe, Store, Loader2, LogOut, User, Send, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 import Header from '../components/layout/Header';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { showToast } from '../components/shared/Toast';
 import { useTranslation } from '../i18n';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useSyncStore } from '../store/useSyncStore';
+import { syncService } from '../sync/SyncService';
 import { db } from '../db/database';
 
 const inputClass = "w-full h-10 px-3.5 bg-white border border-gray-200/80 rounded-lg text-sm focus:outline-none transition-all";
@@ -16,6 +18,9 @@ export default function Settings() {
   const navigate = useNavigate();
   const { settings, loadSettings, updateSettings, setLanguage, activateCode } = useSettingsStore();
   const { user, signOut } = useAuthStore();
+  const syncStatus = useSyncStore((s) => s.status);
+  const syncPending = useSyncStore((s) => s.pendingCount);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('');
@@ -219,6 +224,54 @@ export default function Settings() {
               <p className="text-xs text-red-600 font-medium">{activationError}</p>
             </div>
           )}
+        </section>
+
+        {/* Cloud Sync */}
+        <section className="bg-white rounded-xl p-6 shadow-xs border border-gray-100/60 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-1 bg-sky-50 rounded-lg">
+              {syncStatus === 'offline' ? <CloudOff size={15} className="text-gray-400" /> : <Cloud size={15} className="text-sky-600" />}
+            </div>
+            <h3 className="text-[13px] font-bold text-gray-800">ক্লাউড সিঙ্ক</h3>
+          </div>
+          <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-white rounded-xl p-3.5 border border-gray-100">
+            <span className="text-xs text-gray-500 font-medium">স্ট্যাটাস</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              syncStatus === 'idle' ? 'bg-emerald-50 text-emerald-600' :
+              syncStatus === 'syncing' || syncStatus === 'pulling' ? 'bg-sky-50 text-sky-600' :
+              syncStatus === 'offline' ? 'bg-gray-100 text-gray-500' :
+              'bg-red-50 text-red-600'
+            }`}>
+              {syncStatus === 'idle' ? 'সিঙ্ক হয়েছে' :
+               syncStatus === 'syncing' ? 'সিঙ্ক হচ্ছে...' :
+               syncStatus === 'pulling' ? 'ডাউনলোড হচ্ছে...' :
+               syncStatus === 'offline' ? 'অফলাইন' : 'ত্রুটি'}
+            </span>
+          </div>
+          {syncPending > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-xl">
+              <div className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
+              <p className="text-xs text-amber-700 font-medium">{syncPending}টি আইটেম সিঙ্ক হওয়া বাকি</p>
+            </div>
+          )}
+          <button
+            onClick={async () => {
+              setIsSyncing(true);
+              try {
+                await syncService.syncNow();
+                showToast('success', 'সিঙ্ক সম্পন্ন হয়েছে');
+              } catch {
+                showToast('error', 'সিঙ্ক করতে সমস্যা হয়েছে');
+              } finally {
+                setIsSyncing(false);
+              }
+            }}
+            disabled={isSyncing || syncStatus === 'offline'}
+            className="w-full h-10 flex items-center justify-center gap-2 bg-sky-50 text-sky-700 rounded-lg text-sm font-semibold active:bg-sky-100 border border-sky-200/60 transition-colors disabled:opacity-50"
+          >
+            {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            {isSyncing ? 'সিঙ্ক হচ্ছে...' : 'এখনই সিঙ্ক করুন'}
+          </button>
         </section>
 
         {/* Data Management */}

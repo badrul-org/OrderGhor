@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/database';
+import { syncService } from '../sync/SyncService';
 import type { Order, OrderStatus } from '../types';
 
 interface OrderState {
@@ -27,6 +28,7 @@ export const useOrderStore = create<OrderState>((set) => ({
     const id = (await db.orders.add(order)) as number;
     const newOrder = { ...order, id };
     set((state) => ({ orders: [newOrder, ...state.orders] }));
+    syncService.enqueue('orders', 'create', id);
     return id;
   },
 
@@ -35,11 +37,13 @@ export const useOrderStore = create<OrderState>((set) => ({
     set((state) => ({
       orders: state.orders.map((o) => (o.id === id ? { ...o, ...updates, updatedAt: new Date() } : o)),
     }));
+    syncService.enqueue('orders', 'update', id);
   },
 
   deleteOrder: async (id) => {
     await db.orders.delete(id);
     set((state) => ({ orders: state.orders.filter((o) => o.id !== id) }));
+    syncService.enqueue('orders', 'delete', id);
   },
 
   updateOrderStatus: async (id, status) => {
@@ -47,6 +51,7 @@ export const useOrderStore = create<OrderState>((set) => ({
     set((state) => ({
       orders: state.orders.map((o) => (o.id === id ? { ...o, orderStatus: status, updatedAt: new Date() } : o)),
     }));
+    syncService.enqueue('orders', 'update', id);
   },
 
   getOrdersByCustomer: async (customerId) => {
