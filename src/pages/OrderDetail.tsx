@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Phone, MessageCircle, Edit, Trash2, ChevronDown } from 'lucide-react';
+import { Phone, MessageCircle, Edit, Trash2, ChevronDown, FileText } from 'lucide-react';
 import Header from '../components/layout/Header';
 import OrderStatusBadge from '../components/shared/OrderStatusBadge';
 import PaymentBadge from '../components/shared/PaymentBadge';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
+import InvoiceModal from '../components/invoice/InvoiceModal';
 import { showToast } from '../components/shared/Toast';
 import { useTranslation } from '../i18n';
 import { useOrderStore } from '../store/useOrderStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { getWhatsAppUrl, getOrderConfirmationMessage, getDeliveryUpdateMessage } from '../utils/parseOrder';
 import { ORDER_STATUSES, STATUS_COLORS } from '../utils/constants';
@@ -20,10 +22,12 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { updateOrderStatus, deleteOrder, updateOrder } = useOrderStore();
+  const { settings } = useSettingsStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showPaymentMenu, setShowPaymentMenu] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -193,7 +197,13 @@ export default function OrderDetail() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setShowInvoice(true)}
+            className="flex-1 h-11 flex items-center justify-center gap-2 bg-amber-500 text-white rounded-lg text-sm font-bold active:opacity-90 transition-opacity shadow-md"
+          >
+            <FileText size={16} /> ইনভয়েস
+          </button>
           <button onClick={() => navigate(`/orders/${order.id}/edit`)} className="flex-1 h-11 flex items-center justify-center gap-2 bg-primary text-white rounded-lg text-sm font-bold active:opacity-90 transition-opacity shadow-md">
             <Edit size={16} /> {t.common.edit}
           </button>
@@ -214,6 +224,14 @@ export default function OrderDetail() {
         confirmText={t.common.delete}
         danger
       />
+
+      {showInvoice && settings && (
+        <InvoiceModal
+          order={order}
+          settings={settings}
+          onClose={() => setShowInvoice(false)}
+        />
+      )}
     </div>
   );
 }
